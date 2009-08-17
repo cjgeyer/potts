@@ -1,0 +1,397 @@
+
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+
+\renewcommand{\mod}{\mathbin{\rm mod}}
+\newcommand{\opor}{\mathbin{\rm or}}
+\newcommand{\opand}{\mathbin{\rm and}}
+
+\DeclareMathOperator{\logit}{logit}
+
+\newcommand{\abs}[1]{\lvert #1 \rvert}
+
+\begin{document}
+
+\title{Design of Potts Package}
+
+\author{Charles J. Geyer}
+
+\maketitle
+
+\section{Introduction}
+
+This package is a clean-up of some old code designed to be loaded into S-Plus.
+It probably no longer works with S-Plus, and, anyway, we want to use R.
+Hence this is a design for the R package \texttt{potts}.
+
+The package deals only with Potts models on rectangular lattices
+(no triangular, hexagonal, or irregular).
+
+A realization of a Potts model is an integer matrix, whose components take
+values in the set $\{ 1, \ldots, \texttt{ncolor} \}$.  For vividness, we call
+components of this matrix ``pixels'' thinking of the realization as an image,
+each pixel having one of \texttt{ncolor} colors.
+
+Since \texttt{ncolor}
+is typically small (2, 3, or 4) and the row and column dimensions of the
+matrix may be very large (more than a thousand), we need a packed format to
+save space.  The packed format is an R vector of type \verb@"raw"@ described
+as follows.
+\begin{itemize}
+\item The first byte stores \verb@ncolor - 1@, which must thus be less than
+255 (decimal) so \verb@ncolor@ is less than 256 (decimal).
+\item The second byte stores \verb@log2pixelsperbyte@,
+which must be 0, 1, 2, or 3 so the number of pixels stored in one byte
+of the packed format is 1, 2, 4, or 8 (only powers of 2 are allowed).
+This is somewhat inefficient packing but access is much faster if no
+pixels are split across two bytes.
+\item The next 4 bytes store \texttt{nrow}, the row dimension of the matrix.
+If the
+packed format is a vector \texttt{raw} of type \verb@unsigned char *@,
+then the bytes are stored so that \verb@raw[2]@ could be cast
+to \verb@uint_fast32_t@ (defined in \verb@stdint.h@) except for alignment
+issues (so the code does not literally do such a cast).
+\item The next 4 bytes store \texttt{ncol}, the column dimension of the matrix.
+The bytes are stored in the same order as the previous item.
+\item The rest of the bytes store the components of the matrix, which in
+unpacked format (an integer matrix) are numbers between 1 and \texttt{ncolor}
+and in packed format are numbers between 0 and \verb@ncolor - 1@.  This is
+as usual: one-origin indexing in R and zero-origin indexing in C.
+The bytes are packed as specified in the second item.  If the matrix
+in unpacked format is the R matrix \texttt{x}, then the order of components
+is as in \verb@as.vector(x)@.  The first \verb@1 << log2pixelsperbyte@
+components of the unpacked form are packed into the first byte of the packed
+form, and so forth.  Within a byte of the packed form the components of
+the unpacked form appear in reverse order (first in unpacked order is
+rightmost in the byte).  This makes for simpler access.
+\end{itemize}
+
+A Potts model is an exponential family with \verb@ncolor + 1@ canonical
+statistics.  The first \texttt{ncolor} count then number of pixels of each
+color.  The last counts the number of neighbor pairs of pixels having the
+same color (as each other).  There are three possible notions of neighbor.
+\begin{itemize}
+\item Under ``toroidal boundary conditions'' the pixel
+with coordinates $i$ and $j$
+in the matrix using zero-origin indexing is a neighbor of the pixels having
+coordinates $i$ and $(j \pm 1) \mod \texttt{ncol}$ and of the pixels having
+coordinates $(i \pm 1) \mod \texttt{nrow}$ and $j$.  Each pixel has four
+neighbors.
+\item Under ``free boundary conditions'' the pixel
+with coordinates $i$ and $j$
+in the matrix using zero-origin indexing is a neighbor of the pixels having
+coordinates $i$ and $j \pm 1$, if those are coordinates of a pixel,
+and of the pixels having coordinates $i \pm 1$ and $j$, if those are the
+coordinates of a pixel.  Each pixel has four neighbors, except for pixels
+in the interior of the first and last rows and first and last columns,
+which have only three neighbors, and except for the four corner pixels,
+which have only two neighbors.
+\item Under ``conditioning on the boundary'' only pixels in the interior
+of the matrix are considered random and updated by the algorithm.  The
+pixel with coordinates $i$ and $j$, if in the interior,
+is a neighbor of the pixels having
+coordinates $i$ and $j \pm 1$ and of the pixels having coordinates
+$i \pm 1$ and $j$.  Each interior, random pixel has four neighbors.
+\end{itemize}
+
+Under toroidal or free boundary conditions the first \texttt{ncolor}
+canonical statistics have the same form, the $k$-th of them is
+$$
+   t_k(x)
+   =
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   I(x_{i j} = k),
+$$
+where $I(\,\cdot\,)$ is a function mapping logical expressions to zero or one,
+zero for \texttt{FALSE} and one for \texttt{TRUE}, and $r$ and $c$ are math
+notations for \texttt{nrow} and \texttt{ncol}, respectively.
+When conditioning on the boundary, these statistics do not count the boundary
+rows
+$$
+   t_k(x)
+   =
+   \sum_{i = 1}^{r - 2}
+   \sum_{j = 1}^{c - 2}
+   I(x_{i j} = k).
+$$
+Under toroidal boundary conditions the last canonical statistic has
+the form
+\begin{subequations}
+\begin{equation} \label{eq:torus}
+\begin{split}
+   t_*(x)
+   & =
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   I(x_{i j} = x_{(i + 1) \mod r, j})
+   \\
+   & \hphantom{=} \qquad
+   +
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   I(x_{i j} = x_{i, (j + 1) \mod c})
+\end{split}
+\end{equation}
+Under free boundary conditions it has the form
+\begin{equation} \label{eq:free}
+\begin{split}
+   t_*(x)
+   & =
+   \sum_{i = 0}^{r - 2}
+   \sum_{j = 0}^{c - 1}
+   I(x_{i j} = x_{i + 1, j})
+   \\
+   & \hphantom{=} \qquad
+   +
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 2}
+   I(x_{i j} = x_{i, j + 1})
+\end{split}
+\end{equation}
+When conditioning on the boundary it has the form
+\begin{equation} \label{eq:condition}
+\begin{split}
+   t_*(x)
+   & =
+   \sum_{i = 0}^{r - 2}
+   \sum_{j = 1}^{c - 2}
+   I(x_{i j} = x_{i + 1, j})
+   \\
+   & \hphantom{=} \qquad
+   +
+   \sum_{i = 1}^{r - 2}
+   \sum_{j = 0}^{c - 2}
+   I(x_{i j} = x_{i, j + 1})
+\end{split}
+\end{equation}
+\end{subequations}
+
+We now need to describe the Swendsen-Wang algorithm sufficiently well to
+see how it deals correctly with each of the three boundary conditions.
+The Swendsen-Wang algorithm introduces, in addition to the $x_{i j}$ considered
+random, new variables called \emph{bond variables}: one $b^v_{i j}$
+for each $i, j$ in
+the first sum in \eqref{eq:torus}, \eqref{eq:free}, or \eqref{eq:condition}
+and one $b^h_{i j}$ for each $i, j$ in the second sum.  The marginal
+distribution of the pixels is the Potts model distribution (exponential
+family with the canonical statistics described above).  The conditional
+distribution of the bonds given the pixels is independent Bernoulli, described
+as follows.  First, the bond is zero unless the pixels involved are the
+same color
+\begin{align*}
+   b^v_{i j} = 0, & \qquad x_{i j} \neq x_{i \oplus 1, j}
+   \\
+   b^h_{i j} = 0, & \qquad x_{i j} \neq x_{i, j \oplus 1}
+\end{align*}
+where $\oplus$ means ordinary addition in case of free boundary conditions
+or conditioning on the boundary and addition mod $r$ or mod $c$, as
+appropriate, in case of toroidal boundary conditions.  Second, bonds
+involving pixels of the same color are conditionally independent and
+identically distributed.
+\begin{align*}
+   b^v_{i j} \sim \text{Ber}(p), & \qquad x_{i j} = x_{i \oplus 1, j}
+   \\
+   b^h_{i j} \sim \text{Ber}(p), & \qquad x_{i j} = x_{i, j \oplus 1}
+\end{align*}
+where $\sim$ means distributed as and $\text{Ber}(p)$ denotes the Bernoulli
+distribution with success probability $p$, which is a parameter to be named
+later.  We say the pixels involved are \emph{potentially bonded} if there
+is a bond variable connecting them and \emph{actually bonded} if the bond
+variable is equal to one.  The Swendsen-Wang sampler is
+a block Gibbs sampler that updates the
+bonds in a block conditional on the pixels (the conditional just described)
+and then updates the pixels in a block conditional on the bonds (the
+conditional needing to be derived from the joint).
+
+Hence we need to derive the conditional of pixels given bonds.  In case of
+toroidal boundary conditions the joint distribution of pixels and bonds has
+unnormalized probability mass function (PMF)
+\begin{multline*}
+   \exp\Biggl(
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   \theta_{x_{i j}}
+   +
+   \theta_*
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   I(x_{i j} = x_{(i + 1) \mod r, j})
+   \\
+   +
+   \theta_*
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   I(x_{i j} = x_{i, (j + 1) \mod c})
+   \Biggr)
+   \\
+   \times
+   \prod_{i = 0}^{r - 1}
+   \prod_{j = 0}^{c - 1}
+   I(b^v_{i j} = 0 \opor x_{i j} = x_{(i + 1) \mod r, j})
+   I(b^h_{i j} = 0 \opor x_{i j} = x_{i, (j + 1) \mod c})
+   \\
+   \times
+   \prod_{i = 0}^{r - 1}
+   \prod_{j = 0}^{c - 1}
+   \bigl( p^{b^v_{i j}} (1 - p)^{1 - b^v_{i j}}
+   \bigr)^{I(x_{i j} = x_{(i + 1) \mod r, j})}
+   \bigl( p^{b^h_{i j}} (1 - p)^{1 - b^h_{i j}}
+   \bigr)^{I(x_{i j} = x_{i, (j + 1) \mod c})}
+\end{multline*}
+which simplifies to
+\begin{multline*}
+   \exp\Biggl(
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   \theta_{x_{i j}}
+   +
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   \bigl( \theta_* + \psi b^v_{i j} + \log(1 - p) \bigr)
+   I(x_{i j} = x_{(i + 1) \mod r, j})
+   \\
+   +
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   \bigl( \theta_* + \psi b^h_{i j} + \log(1 - p) \bigr)
+   I(x_{i j} = x_{i, (j + 1) \mod c})
+   \Biggr)
+   \\
+   \times
+   \prod_{i = 0}^{r - 1}
+   \prod_{j = 0}^{c - 1}
+   I(b^v_{i j} = 0 \opor x_{i j} = x_{(i + 1) \mod r, j})
+   I(b^h_{i j} = 0 \opor x_{i j} = x_{i, (j + 1) \mod c})
+\end{multline*}
+where $\psi = \logit(p)$.  Now we choose to define
+$$
+   p = 1 - \exp(- \theta_*)
+$$
+which makes $\theta_* + \log(1 - p)$ equal to zero, so the terms in the
+exponential part of the PMF drop out
+when $b^h_{i j} = 0$ or $b^v_{i j} = 0$.
+
+Now we introduce the graph of bonds.  This is the undirected graph whose
+nodes are pixels and whose edges are actual bonds.  We note that actually
+bonded pixels must
+be the same color; hence pixels in the same maximal connected component of
+the bond graph must be the same color.  Furthermore, pixels in different
+maximal connected components can never be actually bonded,
+so the ``drop out'' just mentioned occurs for terms involving potentially
+bonded pixels in different maximal connected components.  Finally, the
+non-exponential part of the PMF is equal to one for
+states in which all pixels in a maximal connected component are the same
+color.  Thus we conclude that (with the particular choice of $p$ given above)
+the colors of the maximal connected components are conditionally independent
+given the bonds.  If $\mathcal{A}$ denotes the set of maximal connected
+components, then the unnormalized PMF can be rewritten
+\begin{multline*}
+   \prod_{A \in \mathcal{A}}
+   \exp\Biggl(
+   \abs{A} \cdot \theta_{x_A}
+   \\
+   +
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   \bigl( \theta_* + \psi b^v_{i j} + \log(1 - p) \bigr)
+   I\bigl((i, j) \in A \opand ((i + 1) \mod r, j) \in A\bigr)
+   \\
+   +
+   \sum_{i = 0}^{r - 1}
+   \sum_{j = 0}^{c - 1}
+   \bigl( \theta_* + \psi b^h_{i j} + \log(1 - p) \bigr)
+   I\bigl((i, j) \in A \opand (i, (j + 1) \mod c) \in A \bigr)
+   \Biggr)
+\end{multline*}
+where $\abs{A}$ denotes the cardinality of the set $A$ (the size of the
+maximal connected component $A$) and $x_A$ denotes the color of the maximal
+connected component $A$ (we are now only considering states in which all
+pixels in the component are colored the same).  Since the only term that
+involves the pixels is now $x_A$, we may drop the terms that contain bonds
+only and still have an unnormalized conditional PMF
+$$
+   \prod_{A \in \mathcal{A}} \exp( \abs{A} \cdot \theta_{x_A} )
+$$
+Thus we finally see that the block Gibbs update of pixels given bonds
+(for toroidal boundary conditions) choses colors independently for maximal
+connected components and choses color $k$ for maximal connected component $A$
+with probability proportional to $\exp( \abs{A} \cdot \theta_k )$.
+
+Our discussion of the Swendsen-Wang algorithm is complete for the case of
+toroidal boundary conditions.  We now quickly check that the other two boundary
+conditions are analogous.  For free boundary conditions, this is obvious,
+there are just fewer bond variables (none connecting the first and last row
+or the first and last column), but everything else is analogous.
+The case of periodic boundary conditions is a bit trickier because some
+bond variables connect pixels in the interior that are random to pixels
+on the boundary that are non-random.  Thus we write that case out in full.
+
+The unnormalized PMF is
+\begin{multline*}
+   \exp\Biggl(
+   \sum_{i = 1}^{r - 2}
+   \sum_{j = 1}^{c - 2}
+   \theta_{x_{i j}}
+   +
+   \sum_{i = 0}^{r - 2}
+   \sum_{j = 1}^{c - 2}
+   \bigl( \theta_* + \psi b^v_{i j} + \log(1 - p) \bigr)
+   I(x_{i j} = x_{i + 1, j})
+   \\
+   +
+   \sum_{i = 1}^{r - 2}
+   \sum_{j = 0}^{c - 2}
+   \bigl( \theta_* + \psi b^h_{i j} + \log(1 - p) \bigr)
+   I(x_{i j} = x_{i, j + 1})
+   \Biggr)
+   \\
+   \times
+   \prod_{i = 0}^{r - 2}
+   \prod_{j = 1}^{c - 2}
+   I(b^v_{i j} = 0 \opor x_{i j} = x_{i + 1, j})
+   \\
+   \times
+   \prod_{i = 1}^{r - 2}
+   \prod_{j = 0}^{c - 2}
+   I(b^h_{i j} = 0 \opor x_{i j} = x_{i, j + 1})
+\end{multline*}
+Again we form the bond graph and find its maximal connected components
+and note that each maximal connected component must be painted the same
+color.  What is different this time is that some maximal components contain
+boundary pixels which are non-random (we are conditioning on their values).
+Hence the colors of such maximal components are also non-random (for a
+particular realization of the bond variables that determines a particular
+set of maximal connected components).  Only maximal connected components
+containing interior pixels only have color that is random conditional
+on the bonds.  Now considering only states in which all pixels in a
+maximal connected component are the same color, which means maximal connected
+components containing one or more boundary pixels must be the color of those
+boundary pixels, the conditional PMF of pixels given bonds simplifies to
+\begin{multline*}
+   \prod_{A \in \mathcal{A}}
+   \exp\Biggl(
+   \abs{A} \cdot \theta_{x_A}
+   \\
+   +
+   \sum_{i = 0}^{r - 2}
+   \sum_{j = 1}^{c - 2}
+   \bigl( \theta_* + \psi b^v_{i j} + \log(1 - p) \bigr)
+   I\bigl((i, j) \in A \opand (i + 1, j) \in A\bigr)
+   \\
+   +
+   \sum_{i = 1}^{r - 2}
+   \sum_{j = 0}^{c - 2}
+   \bigl( \theta_* + \psi b^h_{i j} + \log(1 - p) \bigr)
+   I\bigl((i, j) \in A \opand (i, j + 1) \in A \bigr)
+   \Biggr)
+\end{multline*}
+And as before we note that the only term now containing $x_A$ is the first,
+so the the colors of the random maximal connected components (those not
+containing boundary pixels) are again conditionally independent
+color $k$ is chosen for maximal connected component $A$
+with probability proportional to $\exp( \abs{A} \cdot \theta_k )$.
+
+\end{document}
+

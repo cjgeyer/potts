@@ -1,0 +1,2 @@
+
+0.2-1  Fixed bug where pp and psum were int instead of double in potts.c

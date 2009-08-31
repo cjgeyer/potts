@@ -237,7 +237,7 @@ void potts(unsigned char *raw, double *theta, int *niterin, int *codein,
     unsigned char *ss = (unsigned char *) R_alloc(nvert, sizeof(unsigned char));
     unsigned char *cc = (unsigned char *) R_alloc(nvert, sizeof(unsigned char));
     int *aorder = (int *) R_alloc(ncolor, sizeof(int));
-    int *pp = (int *) R_alloc(ncolor, sizeof(int));
+    double *pp = (double *) R_alloc(ncolor, sizeof(double));
     double alpha_max;
     int alpha_is_zero;
 
@@ -384,7 +384,7 @@ void potts(unsigned char *raw, double *theta, int *niterin, int *codein,
                         pp[k] = exp(cc[i] * (alpha[aorder[k]] - alpha_max));
                     for (int k = 1; k < ncolor; k++)
                         pp[k] += pp[k - 1];
-                    int psum = pp[ncolor - 1];
+                    double psum = pp[ncolor - 1];
                     double u = unif_rand();
                     for (int k = 0; k < ncolor; k++) {
                         newcolor = aorder[k];

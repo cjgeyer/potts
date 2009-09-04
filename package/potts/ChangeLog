@@ -1,2 +1,5 @@
 
 0.2-1  Fixed bug where pp and psum were int instead of double in potts.c
+
+0.3    Changed niter argument to three: nbatch, blen, nspac
+       Now works just like metrop in the mcmc package

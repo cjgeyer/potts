@@ -206,11 +206,14 @@ static void equiv_update(unsigned int *ff, int p0, int q0);
 static void equiv_finish(unsigned int *ff, int nvert);
 static void order_alpha(double *alpha, int ncolor, int *aorder);
 
-void potts(unsigned char *raw, double *theta, int *niterin, int *codein,
-    int *path)
+void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
+    int *nspacin, int *codein, double *batch)
 {
-    int niter = niterin[0];
+    int nbatch = nbatchin[0];
+    int blen = blenin[0];
+    int nspac = nspacin[0];
     int code = codein[0];
+    int niter = nbatch;
 
     if (! (code == BDRY_TORUS || code == BDRY_FREE || code == BDRY_CONDITION))
         error("Can't happen: integer code for boundary conditions bad\n");
@@ -255,7 +258,20 @@ void potts(unsigned char *raw, double *theta, int *niterin, int *codein,
 
     /* alpha[aorder[0]], ..., alpha[aorder[ncolor - 1]] is ascending order */
 
-    for (int iiter = 0, ipath = 0; iiter < niter; iiter++) {
+    // need buffers for batch means and canonical statistic vector
+
+    int nout = ncolor + 1;
+    double *batch_buff = (double *) R_alloc(nout, sizeof(double));
+    double *tt = (double *) R_alloc(nout, sizeof(double));
+
+    for (int ibatch = 0; ibatch < nbatch; ibatch++) {
+
+    for (int i = 0; i < nout; i++)
+        batch_buff[i] = 0.0;
+
+    for (int jbatch = 0; jbatch < blen; jbatch++) {
+
+    for (int ispac = 0; ispac < nspac; ispac++) {
 
         /* do bonds */
 
@@ -403,7 +419,6 @@ void potts(unsigned char *raw, double *theta, int *niterin, int *codein,
 
         /* compute canonical statistics */
 
-        int *tt = &path[ipath];
         for (int k = 0; k < ncolor; k++)
             tt[k] = 0;
         int tstar = 0;
@@ -476,11 +491,19 @@ void potts(unsigned char *raw, double *theta, int *niterin, int *codein,
             error("impossible value of code");
         }
 
-        ipath += ncolor;
-        path[ipath] = tstar;
-        ipath++;
+        tt[ncolor] = tstar;
 
-    }
+    } /* end of inner loop (one iteration) */
+
+    for (int i = 0; i < nout; i++)
+        batch_buff[i] += tt[i];
+
+    } /* end of middle loop (one batch) */
+
+    for (int i = 0; i < nout; i++)
+        batch[i + nout * ibatch] = batch_buff[i] / blen;
+
+    } /* end of outer loop */
 
     PutRNGstate();
 

@@ -8,6 +8,6 @@ void inspectPotts(unsigned char *raw, int *ncolorout,
 void unpackPotts(unsigned char *raw, int *lenrawin, int *ncolorin,
     int *nrowin, int *ncolin, int *myx);
 
-void potts(unsigned char *raw, double *theta, int *niterin, int *codein,
-    int *path);
+void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
+    int *nspacin, int *codein, double *batch);
 

@@ -1,5 +1,5 @@
 
-R version 2.9.0 (2009-04-17)
+R version 2.9.1 (2009-06-26)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -29,8 +29,8 @@ Type 'q()' to quit R.
 > x <- matrix(1, nrow = nrow, ncol = ncol)
 > foo <- packPotts(x, ncolor)
 > 
-> out <- potts(foo, theta, niter = 10)
-> out$path
+> out <- potts(foo, theta, nbatch = 10)
+> out$batch
       [,1] [,2] [,3] [,4]  [,5]
  [1,]   43   48   53 9856 19519
  [2,]   85 9716   94  105 19045
@@ -43,8 +43,8 @@ Type 'q()' to quit R.
  [9,] 9179  283  263  275 17617
 [10,]  288  337 9118  257 17475
 > 
-> out <- potts(foo, theta, niter = 10, boundary = "free")
-> out$path
+> out <- potts(foo, theta, nbatch = 10, boundary = "free")
+> out$batch
       [,1] [,2] [,3] [,4]  [,5]
  [1,] 9821   62   70   47 19254
  [2,]  113  133 9660   94 18805
@@ -57,8 +57,8 @@ Type 'q()' to quit R.
  [9,]  308 9050  293  349 17140
 [10,]  382  345  385 8888 16924
 > 
-> out <- potts(foo, theta, niter = 10, boundary = "condition")
-> out$path
+> out <- potts(foo, theta, nbatch = 10, boundary = "condition")
+> out$batch
       [,1] [,2] [,3] [,4]  [,5]
  [1,] 9460   42   63   39 18908
  [2,] 9335   96   90   83 18502
@@ -70,5 +70,19 @@ Type 'q()' to quit R.
  [8,] 8841  286  234  243 17177
  [9,] 8741  299  295  269 16978
 [10,] 8664  319  328  293 16802
+> 
+> save.seed <- .Random.seed
+> out <- potts(foo, theta, nbatch = 20, blen = 10, nspac = 5)
+> niter <- out$nbatch * out$blen * out$nspac
+> .Random.seed <- save.seed
+> out.too <- potts(foo, theta, nbatch = niter)
+> 
+> my.batch <- out.too$batch[1:niter %% out$nspac == 0, ]
+> my.batch <- array(as.vector(my.batch),
++     dim = c(out$blen, out$nbatch, ncolor + 1))
+> my.batch <- apply(my.batch, c(2, 3), mean)
+> all.equal(my.batch, out$batch)
+[1] TRUE
+> 
 > 
 > 

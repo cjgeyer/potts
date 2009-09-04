@@ -7,7 +7,8 @@
     Simulate Potts model using Swendsen-Wang algorithm.
 }
 \usage{
-potts(obj, param, niter, boundary = c("torus", "free", "condition"))
+potts(obj, param, nbatch, blen = 1, nspac = 1,
+    boundary = c("torus", "free", "condition"))
 }
 \arguments{
   \item{obj}{an R vector of class \code{"raw"} that encodes a realization
@@ -17,7 +18,9 @@ potts(obj, param, niter, boundary = c("torus", "free", "condition"))
       in which case any missing arguments
       are taken from this object.}
   \item{param}{numeric, canonical parameter vector.}
-  \item{niter}{integer, number of iterations to do.}
+  \item{nbatch}{the number of batches.}
+  \item{blen}{the length of batches.}
+  \item{nspac}{the spacing of iterations that contribute to batches.}
   \item{boundary}{type of boundary conditions.
       The value of this argument can be abbreviated.}
 }
@@ -34,11 +37,14 @@ distribution having the specified Potts model.
   \item{final.seed}{value of \code{.Random.seed} after the run.}
   \item{time}{running time of Markov chain from \code{\link{system.time}}.}
   \item{param}{canonical parameter vector.}
-  \item{niter}{number of iterations of Markov chain.}
+  \item{nbatch}{the number of batches.}
+  \item{blen}{the length of batches.}
+  \item{nspac}{the spacing of iterations that contribute to batches.}
   \item{boundary}{the argument \code{boundary}.}
-  \item{path}{an \code{niter} by \code{ncolor + 1} matrix, where \code{ncolor}
-      is the number of colors of the potts model; each row is the canonical
-      statistic vector for one iteration of the Markov chain.}
+  \item{batch}{an \code{nbatch} by \code{ncolor + 1} matrix, where \code{ncolor}
+      is the number of colors of the potts model; each row is the batch means
+      for the canonical statistic vector for one batch of Markov chain
+      iterations.}
 }
 \examples{
 ncolor <- as.integer(4)
@@ -50,7 +56,7 @@ ncol <- 100
 x <- matrix(1, nrow = nrow, ncol = ncol)
 foo <- packPotts(x, ncolor)
 
-out <- potts(foo, theta, niter = 10)
+out <- potts(foo, theta, nbatch = 10)
 out$path
 \dontrun{image(out$final)}
 }

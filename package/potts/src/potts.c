@@ -397,7 +397,7 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
                         newcolor--;
                 } else /* alphas not all zero */ {
                     for (int k = 0; k < ncolor; k++)
-                        pp[k] = exp(cc[i] * (alpha[aorder[k]] - alpha_max));
+                        pp[k] = exp(gg[i] * (alpha[aorder[k]] - alpha_max));
                     for (int k = 1; k < ncolor; k++)
                         pp[k] += pp[k - 1];
                     double psum = pp[ncolor - 1];

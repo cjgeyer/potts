@@ -170,22 +170,3 @@
 
  all.equal(out.too$batch, out.too.too$batch)
 
- ##### WTF ??? #####
-
- ##### check alpha = 0 #####
- 
- alpha <- rep(0, ncolor)
- theta <- c(alpha, beta)
-
- save.seed <- .Random.seed
- out.too <- potts(out$initial, theta, nbatch = 5, blen = 3, nspac = 2)
-
- alpha <- rep(0.1, ncolor)
- theta <- c(alpha, beta)
-
- .Random.seed <- save.seed
- out.too.too <- potts(out$initial, theta, nbatch = 5, blen = 3, nspac = 2)
-
- all.equal(out.too$batch, out.too.too$batch)
-
- 

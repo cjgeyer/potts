@@ -15,3 +15,7 @@
        One weird open bug.  The saving of .Random.seed as out$initial.seed
            doesn't work right.  Two runs are not the same as continuation
            of one run.
+
+0.3-3  Fixed the "weird" bug.  .Random.seed must be assigned in the
+           R global environment to have effect, see use of assign function
+           in mcmc/R/potts.R

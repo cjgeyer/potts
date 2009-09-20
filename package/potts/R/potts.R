@@ -13,7 +13,7 @@ potts.potts <- function(obj, param, nbatch, blen = 1, nspac = 1,
     if (missing(nspac)) nspac <- obj$nspac
     if (missing(debug)) debug <- obj$debug
     initial <- obj$final
-    .Random.seed <- obj$final.seed
+    assign(".Random.seed", obj$final.seed, .GlobalEnv)
     potts.raw(initial, param, nbatch, blen, nspac, boundary, debug)
 }
 

@@ -1,5 +1,5 @@
 
-R version 2.9.0 (2009-04-17)
+R version 2.9.2 (2009-08-24)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -184,6 +184,34 @@ Type 'q()' to quit R.
 >  all(unif.equals)
 [1] TRUE
 >  all.equal(after, my.after)
+[1] TRUE
+> 
+>  ##### check uniform random numbers #####
+> 
+>  u <- c(as.vector(out$hunif), as.vector(out$vunif), as.vector(out$punif))
+>  u <- u[u != -1]
+>  ks.test(x = u, y = "punif")
+
+	One-sample Kolmogorov-Smirnov test
+
+data:  u 
+D = 0.0075, p-value = 0.08961
+alternative hypothesis: two-sided 
+
+> 
+>  ##### check alpha = 0 #####
+>  
+>  alpha <- rep(0, ncolor)
+>  theta <- c(alpha, beta)
+> 
+>  out.too <- potts(out, param = theta, debug = FALSE)
+> 
+>  alpha <- rep(0.1, ncolor)
+>  theta <- c(alpha, beta)
+> 
+>  out.too.too <- potts(out, param = theta, debug = FALSE)
+> 
+>  all.equal(out.too$batch, out.too.too$batch)
 [1] TRUE
 > 
 > 

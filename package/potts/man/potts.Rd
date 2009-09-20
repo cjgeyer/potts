@@ -17,7 +17,8 @@ potts(obj, param, nbatch, blen = 1, nspac = 1,
       previous invocation of this function can be supplied,
       in which case any missing arguments
       are taken from this object.}
-  \item{param}{numeric, canonical parameter vector.}
+  \item{param}{numeric, canonical parameter vector.  Last component must
+      nonnegative (see Details below).}
   \item{nbatch}{the number of batches.}
   \item{blen}{the length of batches.}
   \item{nspac}{the spacing of iterations that contribute to batches.}
@@ -27,13 +28,24 @@ potts(obj, param, nbatch, blen = 1, nspac = 1,
 }
 \details{
 Runs a Swendsen-Wang algorithm producing a Markov chain with equilibrium
-distribution having the specified Potts model.
+distribution having the specified Potts model.  The state of a Potts model
+is a collection of random variables taking values in a finite set.  Here
+the finite set is 1, \ldots, \code{ncolor} and the elements are called
+\dQuote{colors}.  The variables are associated with the nodes of a rectangular
+lattice.  The probability model is exponential family with canonical statistic
+vector of length \code{ncolor + 1}.  The first \code{ncolor} components are
+the counts of the number of variables of each color.  The last component is
+the number of neighbor pairs of the same color.  The last component of the
+canonical parameter vector (argument \code{param}) must be nonnegative
+for the Swendsen-Wang algorithm to work (Potts models are defined for
+negative dependence parameter, but can't be simulated using this algorithm).
 }
 \value{
   an object of class \code{"potts"},
   which is a list containing at least the following components:
-  \item{initial}{initial state of Markov chain.}
-  \item{final}{final state of Markov chain.}
+  \item{initial}{initial state of Markov chain in the format output
+  by \code{\link{packPotts}}.}
+  \item{final}{final state of Markov chain in the same format.}
   \item{initial.seed}{value of \code{.Random.seed} before the run.}
   \item{final.seed}{value of \code{.Random.seed} after the run.}
   \item{time}{running time of Markov chain from \code{\link{system.time}}.}

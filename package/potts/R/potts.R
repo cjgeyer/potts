@@ -1,23 +1,24 @@
 
 potts <- function(obj, param, nbatch, blen = 1, nspac = 1,
-    boundary = c("torus", "free", "condition"))
+    boundary = c("torus", "free", "condition"), debug = FALSE)
 UseMethod("potts")
 
 potts.potts <- function(obj, param, nbatch, blen = 1, nspac = 1,
-    boundary = c("torus", "free", "condition"))
+    boundary = c("torus", "free", "condition"), debug = FALSE)
 {
     boundary <- match.arg(boundary)
     if (missing(param)) param <- obj$param
     if (missing(nbatch)) nbatch <- obj$nbatch
     if (missing(blen)) blen <- obj$blen
     if (missing(nspac)) nspac <- obj$nspac
+    if (missing(debug)) debug <- obj$debug
     initial <- obj$final
     .Random.seed <- obj$final.seed
-    potts.raw(initial, param, nbatch, blen, nspac, boundary)
+    potts.raw(initial, param, nbatch, blen, nspac, boundary, debug)
 }
 
 potts.raw <- function(obj, param, nbatch, blen = 1, nspac = 1,
-    boundary = c("torus", "free", "condition"))
+    boundary = c("torus", "free", "condition"), debug = FALSE)
 {
     boundary <- match.arg(boundary)
 
@@ -29,6 +30,8 @@ potts.raw <- function(obj, param, nbatch, blen = 1, nspac = 1,
     stopifnot(all(is.finite(param)))
     if(length(param) != initial.info$ncolor + 1)
         stop("length(param) not number of colors + 1")
+    nrow <- initial.info$nrow
+    ncol <- initial.info$ncol
 
     stopifnot(is.numeric(nbatch))
     stopifnot(length(nbatch) == 1)
@@ -48,19 +51,55 @@ potts.raw <- function(obj, param, nbatch, blen = 1, nspac = 1,
     nspac <- as.integer(nspac)
     stopifnot(nspac > 0)
 
+    niter <- nbatch * blen * nspac
+
     boundary.code <- match(boundary, c("torus", "free", "condition"))
+
+    stopifnot(is.logical(debug))
+    stopifnot(length(debug) == 1)
+    if (debug) {
+        pstate <- array(as.integer(0), dim = c(niter, nrow, ncol))
+        hstate <- array(as.integer(0), dim = c(niter, nrow, ncol))
+        vstate <- array(as.integer(0), dim = c(niter, nrow, ncol))
+        patch <- array(as.integer(0), dim = c(niter, nrow, ncol))
+        hunif <- array(as.double(-1), dim = c(niter, nrow, ncol))
+        vunif <- array(as.double(-1), dim = c(niter, nrow, ncol))
+        punif <- matrix(as.double(-1), niter, nrow * ncol)
+    } else {
+        pstate <- array(as.integer(0), dim = c(1, 1, 1))
+        hstate <- array(as.integer(0), dim = c(1, 1, 1))
+        vstate <- array(as.integer(0), dim = c(1, 1, 1))
+        patch <- array(as.integer(0), dim = c(1, 1, 1))
+        hunif <- array(as.double(-1), dim = c(1, 1, 1))
+        vunif <- array(as.double(-1), dim = c(1, 1, 1))
+        punif <- array(as.double(-1), dim = c(1, 1, 1))
+        punif <- matrix(as.double(-1), 1, 1)
+    }
 
     out.time <- system.time(
     out <- .C("potts", final = obj, param = as.double(param),
         nbatch = nbatch, blen = blen, nspac = nspac,
         code = as.integer(boundary.code),
         batch = matrix(as.double(0), nrow = length(param), ncol = nbatch),
+        debug = debug, pstate = pstate, hstate = hstate, vstate = vstate,
+        patch = patch, hunif = hunif, vunif = vunif, punif = punif,
         PACKAGE = "potts")
     )
+
+    if (debug) {
+        return(structure(list(initial.seed = saveseed,
+        final.seed = .Random.seed, initial = obj, final = out$final,
+        param = param, nbatch = nbatch, blen = blen, nspac = nspac,
+        boundary = boundary, batch = t(out$batch), time = out.time,
+        debug = TRUE, pstate = out$pstate, hstate = out$hstate,
+        vstate = out$vstate, patch = out$patch, hunif = out$hunif,
+        vunif = out$vunif, punif = out$punif), class = "potts"))
+    }
+
     return(structure(list(initial.seed = saveseed, final.seed = .Random.seed,
         initial = obj, final = out$final, param = param, nbatch = nbatch,
-        blen = blen, nspac = nspac,
-        boundary = boundary, batch = t(out$batch), time = out.time),
+        blen = blen, nspac = nspac, boundary = boundary,
+        batch = t(out$batch), time = out.time, debug = FALSE),
         class = "potts"))
 }
 

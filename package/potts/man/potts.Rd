@@ -8,7 +8,7 @@
 }
 \usage{
 potts(obj, param, nbatch, blen = 1, nspac = 1,
-    boundary = c("torus", "free", "condition"))
+    boundary = c("torus", "free", "condition"), debug = FALSE)
 }
 \arguments{
   \item{obj}{an R vector of class \code{"raw"} that encodes a realization
@@ -23,6 +23,7 @@ potts(obj, param, nbatch, blen = 1, nspac = 1,
   \item{nspac}{the spacing of iterations that contribute to batches.}
   \item{boundary}{type of boundary conditions.
       The value of this argument can be abbreviated.}
+  \item{debug}{return additional debugging information.}
 }
 \details{
 Runs a Swendsen-Wang algorithm producing a Markov chain with equilibrium
@@ -57,7 +58,7 @@ x <- matrix(1, nrow = nrow, ncol = ncol)
 foo <- packPotts(x, ncolor)
 
 out <- potts(foo, theta, nbatch = 10)
-out$path
+out$batch
 \dontrun{image(out$final)}
 }
 \keyword{misc}

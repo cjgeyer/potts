@@ -9,5 +9,7 @@ void unpackPotts(unsigned char *raw, int *lenrawin, int *ncolorin,
     int *nrowin, int *ncolin, int *myx);
 
 void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
-    int *nspacin, int *codein, double *batch);
+    int *nspacin, int *codein, double *batch, int *debugin, int *pstate,
+    int *hstate, int *vstate, int *patch, double *hunif, double *vunif,
+    double *punif);
 

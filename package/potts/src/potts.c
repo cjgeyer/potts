@@ -207,13 +207,15 @@ static void equiv_finish(unsigned int *ff, int nvert);
 static void order_alpha(double *alpha, int ncolor, int *aorder);
 
 void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
-    int *nspacin, int *codein, double *batch)
+    int *nspacin, int *codein, double *batch, int *debugin, int *pstate,
+    int *hstate, int *vstate, int *patch, double *hunif, double *vunif,
+    double *punif)
 {
     int nbatch = nbatchin[0];
     int blen = blenin[0];
     int nspac = nspacin[0];
     int code = codein[0];
-    int niter = nbatch;
+    int is_debug = debugin[0];
 
     if (! (code == BDRY_TORUS || code == BDRY_FREE || code == BDRY_CONDITION))
         error("Can't happen: integer code for boundary conditions bad\n");
@@ -231,6 +233,9 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
 
     double *alpha = theta;
     double beta = theta[ncolor];
+    if (beta < 0.0)
+        error("Swendsen-Wang algorithm can only handle nonnegative theta[ncolor + 1]");
+
     double bprob = (- expm1(- beta));    /* conditional probability of bond */
 
     int nvert = nrow * ncol;
@@ -253,10 +258,10 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
     for (int k = 0; k < ncolor; k++)
         alpha_is_zero &= (alpha[k] == 0.0);
 
-    order_alpha(alpha, ncolor, aorder);
-    alpha_max = alpha[aorder[ncolor - 1]];
-
-    /* alpha[aorder[0]], ..., alpha[aorder[ncolor - 1]] is ascending order */
+    alpha_max = alpha[0];
+    for (int k = 0; k < ncolor; k++)
+        if (alpha_max < alpha[k])
+            alpha_max = alpha[k];
 
     // need buffers for batch means and canonical statistic vector
 
@@ -264,14 +269,22 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
     double *batch_buff = (double *) R_alloc(nout, sizeof(double));
     double *tt = (double *) R_alloc(nout, sizeof(double));
 
-    for (int ibatch = 0; ibatch < nbatch; ibatch++) {
+    int niter = nbatch * blen * nspac;
+
+    for (int ibatch = 0, iiter = 0; ibatch < nbatch; ibatch++) {
 
     for (int i = 0; i < nout; i++)
         batch_buff[i] = 0.0;
 
     for (int jbatch = 0; jbatch < blen; jbatch++) {
 
-    for (int ispac = 0; ispac < nspac; ispac++) {
+    for (int ispac = 0; ispac < nspac; ispac++, iiter++) {
+
+        if (is_debug)
+            for (int i = 0; i < nrow; i++)
+                for (int j = 0; j < ncol; j++)
+                    pstate[iiter + niter * (i + nrow * j)] =
+                        xx[i + nrow * j] + 1;
 
         /* do bonds */
 
@@ -285,8 +298,16 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
                     int idx2 = ((i + 1) % nrow) + nrow * j;
                     R_assert(0 <= idx1 && idx1 < nvert);
                     R_assert(0 <= idx2 && idx1 < nvert);
-                    if (xx[idx1] == xx[idx2] && unif_rand() < bprob)
-                        equiv_update(ff, idx1, idx2);
+                    if (xx[idx1] == xx[idx2]) {
+                        double u = unif_rand();
+                        if (u < bprob) {
+                            equiv_update(ff, idx1, idx2);
+                            if (is_debug)
+                                hstate[iiter + niter * (i + nrow * j)] = 1;
+                        }
+                        if (is_debug)
+                            hunif[iiter + niter * (i + nrow * j)] = u;
+                    }
                 }
 
             for (int i = 0; i < nrow; i++)
@@ -295,8 +316,16 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
                     int idx2 = i + nrow * ((j + 1) % ncol);
                     R_assert(0 <= idx1 && idx1 < nvert);
                     R_assert(0 <= idx2 && idx1 < nvert);
-                    if (xx[idx1] == xx[idx2] && unif_rand() < bprob)
-                        equiv_update(ff, idx1, idx2);
+                    if (xx[idx1] == xx[idx2]) {
+                        double u = unif_rand();
+                        if (u < bprob) {
+                            equiv_update(ff, idx1, idx2);
+                            if (is_debug)
+                                vstate[iiter + niter * (i + nrow * j)] = 1;
+                        }
+                        if (is_debug)
+                            vunif[iiter + niter * (i + nrow * j)] = u;
+                    }
                 }
 
         } else if (code == BDRY_FREE) {
@@ -307,8 +336,16 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
                     int idx2 = (i + 1) + nrow * j;
                     R_assert(0 <= idx1 && idx1 < nvert);
                     R_assert(0 <= idx2 && idx1 < nvert);
-                    if (xx[idx1] == xx[idx2] && unif_rand() < bprob)
-                        equiv_update(ff, idx1, idx2);
+                    if (xx[idx1] == xx[idx2]) {
+                        double u = unif_rand();
+                        if (u < bprob) {
+                            equiv_update(ff, idx1, idx2);
+                            if (is_debug)
+                                hstate[iiter + niter * (i + nrow * j)] = 1;
+                        }
+                        if (is_debug)
+                            hunif[iiter + niter * (i + nrow * j)] = u;
+                    }
                 }
 
             for (int i = 0; i < nrow; i++)
@@ -317,8 +354,16 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
                     int idx2 = i + nrow * (j + 1);
                     R_assert(0 <= idx1 && idx1 < nvert);
                     R_assert(0 <= idx2 && idx1 < nvert);
-                    if (xx[idx1] == xx[idx2] && unif_rand() < bprob)
-                        equiv_update(ff, idx1, idx2);
+                    if (xx[idx1] == xx[idx2]) {
+                        double u = unif_rand();
+                        if (u < bprob) {
+                            equiv_update(ff, idx1, idx2);
+                            if (is_debug)
+                                vstate[iiter + niter * (i + nrow * j)] = 1;
+                        }
+                        if (is_debug)
+                            vunif[iiter + niter * (i + nrow * j)] = u;
+                    }
                 }
 
         } else if (code == BDRY_CONDITION) {
@@ -329,8 +374,16 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
                     int idx2 = (i + 1) + nrow * j;
                     R_assert(0 <= idx1 && idx1 < nvert);
                     R_assert(0 <= idx2 && idx1 < nvert);
-                    if (xx[idx1] == xx[idx2] && unif_rand() < bprob)
-                        equiv_update(ff, idx1, idx2);
+                    if (xx[idx1] == xx[idx2]) {
+                        double u = unif_rand();
+                        if (u < bprob) {
+                            equiv_update(ff, idx1, idx2);
+                            if (is_debug)
+                                hstate[iiter + niter * (i + nrow * j)] = 1;
+                        }
+                        if (is_debug)
+                            hunif[iiter + niter * (i + nrow * j)] = u;
+                    }
                 }
 
             for (int i = 1; i < nrow - 1; i++)
@@ -339,8 +392,16 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
                     int idx2 = i + nrow * (j + 1);
                     R_assert(0 <= idx1 && idx1 < nvert);
                     R_assert(0 <= idx2 && idx1 < nvert);
-                    if (xx[idx1] == xx[idx2] && unif_rand() < bprob)
-                        equiv_update(ff, idx1, idx2);
+                    if (xx[idx1] == xx[idx2]) {
+                        double u = unif_rand();
+                        if (u < bprob) {
+                            equiv_update(ff, idx1, idx2);
+                            if (is_debug)
+                                vstate[iiter + niter * (i + nrow * j)] = 1;
+                        }
+                        if (is_debug)
+                            vunif[iiter + niter * (i + nrow * j)] = u;
+                    }
                 }
 
         } else /* Can't happen */ {
@@ -350,6 +411,12 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
         equiv_finish(ff, nvert);
 
         /* Now vertices are in same patch if and only if have same ff[j] */
+
+        if (is_debug)
+            for (int i = 0; i < nrow; i++)
+                for (int j = 0; j < ncol; j++)
+                    patch[iiter + niter * (i + nrow * j)] =
+                        ff[i + nrow * j] + 1;
 
         /* Count pixels in patches */
 
@@ -391,24 +458,26 @@ void potts(unsigned char *raw, double *theta, int *nbatchin, int *blenin,
         for (int i = 0; i < nvert; i++)
             if (gg[i] > 0) /* there is patch number i */ {
                 int newcolor;
+                double u = unif_rand();
                 if (alpha_is_zero) {
-                    newcolor = unif_rand() * ncolor;
+                    newcolor = u * ncolor;
                     if (newcolor >= ncolor)
                         newcolor--;
                 } else /* alphas not all zero */ {
                     for (int k = 0; k < ncolor; k++)
-                        pp[k] = exp(gg[i] * (alpha[aorder[k]] - alpha_max));
+                        pp[k] = exp(gg[i] * (alpha[k] - alpha_max));
                     for (int k = 1; k < ncolor; k++)
                         pp[k] += pp[k - 1];
                     double psum = pp[ncolor - 1];
-                    double u = unif_rand();
                     for (int k = 0; k < ncolor; k++) {
-                        newcolor = aorder[k];
+                        newcolor = k;
                         if (u < pp[k] / psum)
                             break;
                     }
                 }
                 cc[i] = newcolor;
+                if (is_debug)
+                    punif[iiter + niter * i] = u;
             }
 
         /* now cc[j] is the new color of the patch numbered j */

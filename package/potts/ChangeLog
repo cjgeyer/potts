@@ -19,3 +19,7 @@
 0.3-3  Fixed the "weird" bug.  .Random.seed must be assigned in the
            R global environment to have effect, see use of assign function
            in mcmc/R/potts.R
+
+0.3-4  Finished validation.  Now all boundary specifications validated.
+           Also greatly enlarged details section of help page for potts
+           function.

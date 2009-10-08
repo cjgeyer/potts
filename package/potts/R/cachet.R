@@ -76,7 +76,7 @@ gensingleton <- function(ncolor) {
   gengridcache(ncolor, c(1), 1)
 }
 
-singleton <- function(x, ncolor, a, idx, gcache) {
+singleton <- function(x, ncolor, a, idx, gcache=NULL) {
   if (is.null(gcache)) {
     # singleton is so small we don't bother with cacheing
     gcache <- gensingleton(ncolor)
@@ -89,7 +89,7 @@ singleton <- function(x, ncolor, a, idx, gcache) {
   if (idx > 0) {
     grid <- gcache[[idx]]
   }
-  calc_t(x, ncolor, grid=grid, i,j, innergrid=TRUE)[-1]
+  calc_t(x, ncolor, grid=grid, i,j)[-1]
 }
 
 ##############################################################################
@@ -116,10 +116,10 @@ twopixel <- function(x, ncolor, a, idx, gcache=NULL) {
   if (idx > 0) {
     grid <- gcache[[idx]]
   }
-  calc_t(x, ncolor, grid=grid, i,j, innergrid=TRUE)[-1]
+  calc_t(x, ncolor, grid=grid, i,j)[-1]
 }
 
-twopixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
+twopixel.nonoverlap <- function(x, ncolor, a, idx, gcache=NULL) {
   if (is.null(gcache)) {
     # no cache for two pixel
     gcache <- gentwopixel(ncolor)
@@ -134,7 +134,7 @@ twopixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
   if (idx > 0) {
     grid <- gcache[[idx]]
   }
-  calc_t(x, ncolor, grid=grid, i,j, innergrid=TRUE)[-1]
+  calc_t(x, ncolor, grid=grid, i,j)[-1]
 }
 
 ##############################################################################
@@ -148,7 +148,7 @@ genfourpixel <- function(ncolor) {
   gengridcache(ncolor, rep(1,4), 2)
 }
 
-fourpixel <- function(x, ncolor, a, idx, gcache) {
+fourpixel <- function(x, ncolor, a, idx, gcache=NULL) {
   if (is.null(gcache)) {
     # no cache for four pixel
     gcache <- genfourpixel(ncolor)
@@ -164,10 +164,10 @@ fourpixel <- function(x, ncolor, a, idx, gcache) {
   if (idx > 0) {
     grid <- gcache[[idx]]
   }
-  calc_t(x, ncolor, grid=grid, i,j, innergrid=TRUE)[-1]
+  calc_t(x, ncolor, grid=grid, i,j)[-1]
 }
 
-fourpixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
+fourpixel.nonoverlap <- function(x, ncolor, a, idx, gcache=NULL) {
   if (is.null(gcache)) {
     gcache <- genfourpixel(ncolor)
   }
@@ -185,20 +185,20 @@ fourpixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
   if (idx > 0) {
     grid <- gcache[[idx]]
   }
-  calc_t(x, ncolor, grid=grid, i,j, innergrid=TRUE)[-1]
+  calc_t(x, ncolor, grid=grid, i,j)[-1]
 }
 ##############################################################################
 #
 # generate a list of the elements of C^A for a 3x3 window
 #
 ##############################################################################
-genthreebythree <- function(ncolor=2) {
+genthreebythree <- function(ncolor) {
   gengridcache(ncolor, rep(1,9), 3)
 }
 
 nine.cache <- list()
 
-ninepixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
+ninepixel.nonoverlap <- function(x, ncolor, a, idx, gcache=NULL) {
   if (is.null(gcache)) {
     # generate this windows C^A if we don' have it cached.
     if (length(nine.cache) < ncolor ||
@@ -224,20 +224,20 @@ ninepixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
   } else {
     grid <- x[i,j]
   }
-  calc_t(x, ncolor, grid=grid, i[1], j[1], innergrid=TRUE)[-1]
+  calc_t(x, ncolor, grid=grid, i[1], j[1])[-1]
 }
 ##############################################################################
 #
 # Functions for 4x4 windows.
 #
 ##############################################################################
-genfourbyfour <- function(ncolor=2) {
+genfourbyfour <- function(ncolor) {
   gengridcache(ncolor, rep(1,16), 4)
 }
 
 sixteen.cache <- list()
 
-sixteenpixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
+sixteenpixel.nonoverlap <- function(x, ncolor, a, idx, gcache=NULL) {
   if (is.null(gcache)) {
     if (length(sixteen.cache) < ncolor ||
         is.null(sixteen.cache[[ncolor]])) {
@@ -262,6 +262,6 @@ sixteenpixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
   } else {
     grid <- x[i,j]
   }
-  calc_t(x, ncolor, grid=grid, i[1], j[1], innergrid=TRUE)[-1]
+  calc_t(x, ncolor, grid=grid, i[1], j[1])[-1]
 }
 

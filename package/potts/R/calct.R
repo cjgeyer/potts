@@ -58,11 +58,11 @@ calc_t_innergrid <- function(x, ncolor, grid, i, j) {
   t_stat
 }
 
-calc_t <- function(x, ncolor, grid=NULL, i=NULL, j=NULL, innergrid=FALSE) {
-  if (innergrid) {
-    calc_t_innergrid(x, ncolor, grid, i, j)
-  } else {
+calc_t <- function(x, ncolor, grid=NULL, i=NULL, j=NULL) {
+  if (is.null(grid)) {
     calc_t_full(x,ncolor)
+  } else {
+    calc_t_innergrid(x, ncolor, grid, i, j)
   }
 }
 

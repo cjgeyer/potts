@@ -15,7 +15,7 @@
 # gridcache is any cache that f needs.  It may be null.
 #
 ##############################################################################
-generate_t_cache <- function(x, ncolor, t_stat, sizeA, npixel, f
+generate_t_cache <- function(x, ncolor, t_stat, sizeA, npixel, f,
                              gridcache=NULL) {
   nIdx <- ncolor**npixel
   t_cache <- array(0, dim=c(sizeA, nIdx, ncolor+1-1))
@@ -114,7 +114,7 @@ twopixel <- function(x, ncolor, a, idx, gcache=NULL) {
   j2 <- ifelse(j==ncol, 1, j+1)
   grid <- matrix(c(x[i,j], x[i,j2]), ncol=2)
   if (idx > 0) {
-    grid <- twopixel.grid[[idx]]
+    grid <- gcache[[idx]]
   }
   calc_t(x, ncolor, grid=grid, i,j, innergrid=TRUE)[-1]
 }
@@ -205,7 +205,7 @@ ninepixel.nonoverlap <- function(x, ncolor, a, idx, gcache) {
         is.null(nine.cache[[ncolor]])) {
       nine.cache[[ncolor]] <- genthreebythree(ncolor)
     }
-    gcache <- threebythree.cache[[ncolor]]
+    gcache <- nine.cache[[ncolor]]
   }
   nrow <- dim(x)[1]
   ncol <- dim(x)[2]

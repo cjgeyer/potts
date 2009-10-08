@@ -3,7 +3,7 @@
 # calculate composite log likelihood for a potts model.
 #
 ##############################################################################
-composite.ll <- function(theta, t_cache=NULL) {
+composite.ll <- function(theta, t_stat, t_cache=NULL) {
   tot <- 0
   if (is.null(t_cache)) {
     stop("!cache_t not implemented yet in composite.ll!")
@@ -27,7 +27,7 @@ composite.ll <- function(theta, t_cache=NULL) {
 # model.
 #
 ##############################################################################
-gr.composite.ll <- function(theta, t_cache=NULL) {
+gr.composite.ll <- function(theta, t_stat, t_cache=NULL) {
   tot <- rep(0,length(theta))
   if (is.null(t_cache)) {
     stop("!cache_t not implemented yet in composite.ll!")

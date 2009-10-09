@@ -45,5 +45,39 @@ gr.composite.ll(theta, t_stat, t_cache=NULL)
   \code{length(theta)} containing the gradient of the CLL at \code{theta}.
 }
 \examples{
+
+ncolor <- 4
+beta   <- log(1+sqrt(ncolor))
+theta  <- c(rep(0,ncolor), beta)
+
+nrow <- 32
+ncol <- 32
+
+x <- matrix(sample(ncolor, nrow*ncol, replace=TRUE), nrow=nrow, ncol=ncol)
+foo <- packPotts(x, ncolor)
+out <- potts(foo, theta, nbatch=10)
+x <- unpackPotts(out$final)
+
+t_stat <- calc_t(x, ncolor)[-1]
+t_cache_besag <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
+                                  singleton)
+t_cache_two <- generate_t_cache(x, ncolor, t_stat, nrow*ncol/2, 2,
+                                twopixel.nonoverlap)
+
+theta.initial <- 1:ncolor
+
+composite.ll(theta[-1], t_stat, t_cache_besag)
+gr.composite.ll(theta[-1], t_stat, t_cache_besag)
+
+\dontrun{
+optim.mple <- optim(theta.initial, composite.ll, gr=gr.composite.ll,
+                    t_cache, method="BFGS", control=list(fnscale=-1))
+optim.mple$par
+
+optim.two <- optim(theta.initial, composite.ll, gr=gr.composite.ll,
+                   t_cache, method="BFGS", control=list(fnscale=-1))
+optime.two$par
+}
+
 }
 \keyword{misc}

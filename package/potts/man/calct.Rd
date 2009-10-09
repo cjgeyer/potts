@@ -57,5 +57,21 @@ calc_t(x, ncolor, grid=NULL, i=NULL, j=NULL)
   calc_t_innergrid(X, ncolor, A_1, i, j)}
 }
 \examples{
+
+ncolor <- 4
+beta   <- log(1+sqrt(ncolor))
+theta  <- c(rep(0,ncolor), beta)
+
+nrow <- 32
+ncol <- 32
+
+x <- matrix(sample(ncolor, nrow*ncol, replace=TRUE), nrow=nrow, ncol=ncol)
+foo <- packPotts(x, ncolor)
+out <- potts(foo, theta, nbatch=10)
+x <- unpackPotts(out$final)
+
+t_stat <- calc_t(x, ncolor)[-1]
+t_stat_inner <- calc_t(x, ncolor, matrix(1, nrow=2, ncol=2), 1, 1)
+
 }
 \keyword{misc}

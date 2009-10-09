@@ -91,33 +91,68 @@ sixteenpixel.nonoverlap(x, ncolor, a, idx, gcache=NULL)
 	       
 }
 \details{
+
+  This set of functions is used to generate cached calculations of the
+  canonical statistic of a Potts model suitable for passing into
+  \code{composite.ll} or \code{gr.composite.ll}.
+
+  \code{generate_t_cache} is the main function, and the others are
+  intended to be used in conjunction with it.  See the examples below.
+
+  Of special not are \code{incvector} and \code{gengridcache}.  Using
+  these two functions you can easily generate the grid cache for any
+  rectangular sized window.  This is how most of the other functions
+  work.
+
+  Functions that start with \code{gen} generate a \code{list} of the
+  elements of C^A for the window size and number of colors.  Most of
+  these functions call \code{gengridcache} with appropriate arguments.
+
+  Functions that have \code{overlap} and \code{nonoverlap} versions
+  generate a overlapping and nonoverlapping set of windows respectively.
   
-  Calculates the canonical statistics for a realized Potts Model.
-  \code{calc_t} calls \code{calc_t_full} if \code{grid} is \code{NULL}
-  and \code{calc_t_innergrid} otherwise.
+  
+  \code{singleton} is for a single pixel window (Besag or MPLE).
 
-  \code{calc_t_full} calculates the canonical statistics for the full image.
+  \code{twopixel} does a two horizontal pixel window.
 
-  \code{calc_t_innergrid} calculates the canonical statistics for the a
-  window of the image, but with that window replaced by \code{grid},
-  with the upper left corner of \code{grid} located at \code{x[i,j]}.
+  \code{fourpixel} does a two by two pixel window.
+
+  \code{ninepixel} does a three by three pixel window.
+
+  \code{sixteenpixel} does a four by four pixel window.
   
 }
 \value{
-  All functions return a vector of length \code{ncolor+1}.  Elements
-  1,\dots,ncolor contain the number of pixels of each color.  Element
-  ncolor+1 contains the number of matching neighbor pairs for the image.
+  \code{incvector} takes a vector and returns a new vector.  These
+  vectors can be regarded as elements of C^A cast into the a vector.  If
+  you let v_1 be any vector in B = \{ as.vector(c) | c \\in C^A \} then the
+  set of vectors \{v_1,\dots,v_\{|C|^|A|\} | v_\{j+1\} = v_j \} = B.
 
-  \code{calc_t_full} returns the values for the whole image.
+  Functions that start with \code{gen} return a \code{list} of the
+  elements of C^A.
 
-  \code{calc_t_innergrid} returns the value for just the selected
-  window, but this includes the number of matching pairs from the
-  replaced window to it's neighbors.  E.g. if \code{X} is the full
-  image, and A_1 is the value of some window in the image and we want to
-  know the value of \code{t( y union X\A_1)} this would be
-  \code{calc_t_full(X, ncolor) + calc_t_innergrid(X, ncolor, y, i, j) -
-  calc_t_innergrid(X, ncolor, A_1, i, j)}
+  The other functions (e.g. \code{twopixel}, \code{fourpixel}, \dots)
+  return the result of replacing the a-th window of x with the idx-th
+  element of C^A and calculating \code{calc_t_innergrid} for that window.
 }
 \examples{
+
+ncolor <- 4
+beta   <- log(1+sqrt(ncolor))
+theta  <- c(rep(0,ncolor), beta)
+
+nrow <- 32
+ncol <- 32
+
+x <- matrix(sample(ncolor, nrow*ncol, replace=TRUE), nrow=nrow, ncol=ncol)
+foo <- packPotts(x, ncolor)
+out <- potts(foo, theta, nbatch=10)
+x <- unpackPotts(out$final)
+
+t_stat <- calc_t(x, ncolor)[-1]
+t_cache_besag <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
+                                  singleton)
+
 }
 \keyword{misc}

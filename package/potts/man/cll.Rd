@@ -59,24 +59,26 @@ out <- potts(foo, theta, nbatch=10)
 x <- unpackPotts(out$final)
 
 t_stat <- calc_t(x, ncolor)[-1]
-t_cache_besag <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
-                                  singleton)
+t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
+                                 singleton)
 t_cache_two <- generate_t_cache(x, ncolor, t_stat, nrow*ncol/2, 2,
                                 twopixel.nonoverlap)
 
 theta.initial <- 1:ncolor
 
-composite.ll(theta[-1], t_stat, t_cache_besag)
-gr.composite.ll(theta[-1], t_stat, t_cache_besag)
+composite.ll(theta[-1], t_stat, t_cache_mple)
+gr.composite.ll(theta[-1], t_stat, t_cache_mple)
 
 \dontrun{
 optim.mple <- optim(theta.initial, composite.ll, gr=gr.composite.ll,
-                    t_cache, method="BFGS", control=list(fnscale=-1))
+                    t_stat, t_cache_mple, method="BFGS",
+                    control=list(fnscale=-1))
 optim.mple$par
 
 optim.two <- optim(theta.initial, composite.ll, gr=gr.composite.ll,
-                   t_cache, method="BFGS", control=list(fnscale=-1))
-optime.two$par
+                   t_stat, t_cache_two, method="BFGS",
+                   control=list(fnscale=-1))
+optim.two$par
 }
 
 }

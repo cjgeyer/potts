@@ -7,8 +7,8 @@
   for Potts models.
 }
 \usage{
-composite.ll(theta, t_stat, t_cache=NULL)
-gr.composite.ll(theta, t_stat, t_cache=NULL) 
+composite.ll(theta, t_stat, t_cache=NULL, fapply=lapply)
+gr.composite.ll(theta, t_stat, t_cache=NULL, fapply=lapply) 
 }
 \arguments{
 
@@ -29,6 +29,10 @@ gr.composite.ll(theta, t_stat, t_cache=NULL)
                  enumerated element of script(A), denoted A_i.  j
                  corresponds to the jth element of C^\{A_i\}}
 	       
+  \item{fapply}{function.  Expected to function as lapply does.  Usefull
+    for enabling parallel processing.  E.g. use the mclapply function
+    from the multicore package.}
+
 }
 \details{
   
@@ -79,6 +83,16 @@ optim.two <- optim(theta.initial, composite.ll, gr=gr.composite.ll,
                    t_stat, t_cache_two, method="BFGS",
                    control=list(fnscale=-1))
 optim.two$par
+}
+
+\dontrun{
+# or use mclapply to speed things up.
+library(multicore)
+optim.two <- optim(theta.initial, composite.ll, gr=gr.composite.ll,
+                   t_stat, t_cache_two, mclapply, method="BFGS",
+                   control=list(fnscale=-1))
+optim.two$par
+
 }
 
 }

@@ -21,7 +21,8 @@
   with when to regenerate the statistics.
 }
 \usage{
-generate_t_cache(x, ncolor, t_stat, sizeA, npixel, f, gridcache=NULL)
+generate_t_cache(x, ncolor, t_stat, sizeA, npixel, f,
+                 fapply=lapply, gridcache=NULL)
 
 incvector(v, ncolor)
 
@@ -66,6 +67,9 @@ sixteenpixel.nonoverlap(x, ncolor, a, idx, gcache=NULL)
            \code{t_calc_innergrid} with window A_a replaced by the
            idx'th element of C^A.}
 
+  \item{fapply}{function.  It should behave exactly as lapply does.
+                You can use this argument to enable parallel computing.}
+  
   \item{gridcache}{list.  Optional.  If non-null, it is a list of the
                    elements of C^A.  Indexed by \code{idx}.}
 
@@ -151,8 +155,15 @@ out <- potts(foo, theta, nbatch=10)
 x <- unpackPotts(out$final)
 
 t_stat <- calc_t(x, ncolor)[-1]
-t_cache_besag <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
-                                  singleton)
+t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
+                                 singleton)
+
+\dontrun{
+# use multicore to speed things up.
+library(multicore)
+t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
+                                 singleton, fapply=mclapply)
+}
 
 }
 \keyword{misc}

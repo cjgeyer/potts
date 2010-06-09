@@ -52,7 +52,7 @@ calc_t(x, ncolor, grid=NULL, i=NULL, j=NULL)
   window, but this includes the number of matching pairs from the
   replaced window to it's neighbors.  E.g. if \code{X} is the full
   image, and A_1 is the value of some window in the image and we want to
-  know the value of \code{t( y union X\A_1)} this would be
+  know the value of \code{t( y union X\\A_1)} this would be
   \code{calc_t_full(X, ncolor) + calc_t_innergrid(X, ncolor, y, i, j) -
   calc_t_innergrid(X, ncolor, A_1, i, j)}
 }

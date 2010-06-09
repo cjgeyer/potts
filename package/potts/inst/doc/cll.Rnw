@@ -147,10 +147,10 @@ first window.
 <<calctcache>>=
 t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1, 
                                   singleton)
-t_cache_mple[1,,]
+t_cache_mple[[1]]
 t_cache_two <- generate_t_cache(x, ncolor, t_stat, nrow*ncol/2, 2, 
                                 twopixel.nonoverlap)
-t_cache_two[1,,]
+t_cache_two[[1]]
 @ 
 
 \section{Calculating the CLL}
@@ -180,5 +180,20 @@ optim.two$par
 
 theta.true
 @ 
+
+If your system has the {\it multicore} installed, you can take
+advantage by passing mclapply in as the fapply argument to the CLL
+family of functions.
+\begin{verbatim}
+library(multicore)
+t_stat <- calc_t(x, ncolor)[-1]
+t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1, 
+                                  singleton, mclapply)
+theta.initial <- 1:ncolor
+optim.mple <- optim(theta.initial, composite.ll, gr=gr.composite.ll,
+                    t_stat, t_cache_mple, mclapply, method="BFGS", 
+                    control=list(fnscale=-1))
+optim.mple$par
+\end{verbatim}
 
 \end{document}

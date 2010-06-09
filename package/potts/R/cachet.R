@@ -16,16 +16,16 @@
 #
 ##############################################################################
 generate_t_cache <- function(x, ncolor, t_stat, sizeA, npixel, f,
-                             gridcache=NULL) {
+                             fapply=lapply, gridcache=NULL) {
   nIdx <- ncolor**npixel
-  t_cache <- array(0, dim=c(sizeA, nIdx, ncolor+1-1))
-  for(a in 1:sizeA) {
-    t_start <- t_stat - f(x, ncolor, a, 0)
+  fapply(1:sizeA, function(a) {
+    t_start <- t_stat - f(x, ncolor, a, 0, gridcache)
+    arr <- array(0, dim=c(nIdx, ncolor+1-1))
     for(idx in 1:nIdx) {
-      t_cache[a,idx,] <- t_start + f(x, ncolor, a, idx, gridcache)
+      arr[idx,] <- t_start + f(x, ncolor, a, idx, gridcache)
     }
-  }
-  t_cache
+    arr
+  })
 }
 
 ##############################################################################
@@ -241,7 +241,7 @@ sixteenpixel.nonoverlap <- function(x, ncolor, a, idx, gcache=NULL) {
   if (is.null(gcache)) {
     if (length(sixteen.cache) < ncolor ||
         is.null(sixteen.cache[[ncolor]])) {
-      sixteen.cache[[ncolor]] <- genfourbyfour(ncolor)
+      sixteen.cache[[ncolor]] <<- genfourbyfour(ncolor)
     }
     gcache <- sixteen.cache[[ncolor]]
   }

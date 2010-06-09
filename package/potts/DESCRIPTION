@@ -1,8 +1,9 @@
 Package: potts
 Version: 0.4
-Date: 2009-10-15
+Date: 2010-06-10
 Title: Markov Chain Monte Carlo for Potts Models
-Author: Charles J. Geyer <charlie@stat.umn.edu>.
+Author: Charles J. Geyer <charlie@stat.umn.edu> and Leif Johnson
+    <leif@stat.umn.edu>
 Maintainer: Charles J. Geyer <charlie@stat.umn.edu>
 Depends: R (>= 2.6.0)
 Suggests: pooh (>= 0.2)

@@ -1,6 +1,6 @@
 
-R version 2.10.1 (2009-12-14)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.11.1 (2010-05-31)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -33,10 +33,10 @@ Type 'q()' to quit R.
 > x <- unpackPotts(out$final)
 > 
 > # create cache
-> t_stat <- calc_t(x, ncolor)[-1]
+> t_stat <- calc_t(x, ncolor)
 > t_stat
-   2    3    4    * 
-  56   38   57 1687 
+   1    2    3    4    * 
+ 873   56   38   57 1687 
 > t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1, 
 +                                  singleton)
 > 

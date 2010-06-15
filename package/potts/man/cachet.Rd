@@ -1,6 +1,5 @@
 \name{Cache T}
 \alias{generate_t_cache}
-\alias{incvector}
 \alias{gengridcache}
 \alias{gensingleton}
 \alias{singleton}
@@ -24,93 +23,109 @@
 generate_t_cache(x, ncolor, t_stat, sizeA, npixel, f,
                  fapply=lapply, gridcache=NULL)
 
-incvector(v, ncolor)
-
-gengridcache(ncolor, v, ncol)
+gengridcache(ncolor, sizeCA, ncol)
 
 gensingleton(ncolor)
 
-singleton(x, ncolor, a, idx, gcache=NULL)
+singleton(x, ncolor, a, idx, gridcache=NULL)
 
 gentwopixel(ncolor)
 
-twopixel(x, ncolor, a, idx, gcache=NULL)
+twopixel(x, ncolor, a, idx, gridcache=NULL)
 
-twopixel.nonoverlap(x, ncolor, a, idx, gcache=NULL)
+twopixel.nonoverlap(x, ncolor, a, idx, gridcache=NULL)
 
 genfourpixel(ncolor)
 
-fourpixel(x, ncolor, a, idx, gcache=NULL)
+fourpixel(x, ncolor, a, idx, gridcache=NULL)
 
-fourpixel.nonoverlap(x, ncolor, a, idx, gcache=NULL)
+fourpixel.nonoverlap(x, ncolor, a, idx, gridcache=NULL)
 
 genthreebythree(ncolor)
 
-ninepixel.nonoverlap(x, ncolor, a, idx, gcache=NULL)
+ninepixel.nonoverlap(x, ncolor, a, idx, gridcache=NULL)
 
 genfourbyfour(ncolor)
 
-sixteenpixel.nonoverlap(x, ncolor, a, idx, gcache=NULL)
+sixteenpixel.nonoverlap(x, ncolor, a, idx, gridcache=NULL)
 }
 \arguments{
 
   \item{t_stat}{numerical vector of length \code{ncolor}.  Contains the
-                canonical statistic for the whole image, with one
-                component dropped.}
+                canonical statistic for the whole image.}
 
-  \item{sizeA}{numerical.  The number of elements in script(A).}
+  \item{sizeA}{numerical.  The number of elements in \eqn{\mathcal{A}}{sA}.}
 
-  \item{npixel}{numerical.  The number of pixels in one element of script(A).}
+  \item{sizeCA}{numerical.  The number of elements in \eqn{C^A}{C^A}.}
+  
+  \item{npixel}{numerical.  The number of pixels in one element of \eqn{\mathcal{A}}{sA}.}
 
   \item{f}{function.  Takes arguments \code{x}, \code{ncolor}, \code{a},
            \code{idx} and \code{ncolor}.  Returns value of
-           \code{t_calc_innergrid} with window A_a replaced by the
-           idx'th element of C^A.}
+           \code{t_calc_innergrid} with window \eqn{A_a}{A(a)} replaced
+           by the \code{idx}-th element of \eqn{C^A}{C^A}.}
 
   \item{fapply}{function.  It should behave exactly as lapply does.
                 You can use this argument to enable parallel computing.}
   
   \item{gridcache}{list.  Optional.  If non-null, it is a list of the
-                   elements of C^A.  Indexed by \code{idx}.}
+                   elements of \eqn{C^A}{C^A}.  Indexed by \code{idx}.}
 
-  \item{v}{numerical vector of length \code{|C|^|A|}.  Elements must be
-           in 1,\dots,ncolor.}
-
-  \item{x}{2 dimensional matrix, elements in 1, \dots, ncolor,
+  \item{x}{2 dimensional matrix, elements in 1, \dots, \code{ncolor},
            representing a Potts model.}
 
   \item{ncolor}{Number of colors in this Potts Model.}
 
-  \item{ncol}{numerical.  Indicates number of columns to use when
-    casting \code{v} as a matrix.}
+  \item{ncol}{numerical.  Gives the number of columns in a rectangular
+  window.}
 
-  \item{a}{numerical.  Indicates which member of script(A) is being
+  \item{a}{numerical.  Indicates which member of \eqn{\mathcal{A}}{sA} is being
     referenced.}
 
-  \item{idx}{numerical.  Indicates which element of C^A is being referenced.}
+  \item{idx}{numerical.  Indicates which element of \eqn{C^A}{C^A} is
+  being referenced.}
   
-  \item{gcache}{list.  The list contains matricies.  Elements of the
-    matricies must be in 1,\dots,ncolor. Each element of the list is one
-    of the elements of C^A.}
-	       
 }
 \details{
+
+  For a description of notation and terminology, see
+  \code{\link{composite.ll}}.
 
   This set of functions is used to generate cached calculations of the
   canonical statistic of a Potts model suitable for passing into
   \code{composite.ll} or \code{gr.composite.ll}.
 
-  \code{generate_t_cache} is the main function, and the others are
-  intended to be used in conjunction with it.  See the examples below.
+  All of the calculations using \code{\link{composite.ll}} and these
+  cacheing functions need one of the color components to be dropped for
+  the model to be identifiable.  For simplicity, the first color is
+  dropped by \code{generate_t_cache}.
 
-  Of special not are \code{incvector} and \code{gengridcache}.  Using
-  these two functions you can easily generate the grid cache for any
-  rectangular sized window.  This is how most of the other functions
-  work.
+  assume that one component of \eqn{t(x)}{t(x)} is
+  dropped.  This element can correspond to any of the colors in the
+  model, but for simplicity we recommend dropping the first color.
+  
+  In computing the composite log likelihood for a Potts model with
+  \code{ncolor} colors, we are interested in many calculations across
+  \eqn{C^A}{C^A}, the set of all permutations of colors across a window.
+  These functions facilitate those calculations.  \code{gridcache} is a
+  list of \eqn{C^A}{C^A}.
+  
+
+  \code{generate_t_cache} is the main function, and the others are
+  intended to be used in conjunction with it.  \code{generate_t_cache}
+  creates a list of arrays.  Each array represents one window in the
+  image, and each row of the array contains the value of
+  \eqn{t(x)}{t(x)} (with one component dropped) found by replacing the
+  pixels in that window with one of the elements of \eqn{C^A}{C^A}.
+
+  \code{gengridcache} can generate the grid cache for any rectangular
+  window, give the number of colors, size of \eqn{C^A}{C^A}, and number
+  of columns in the window.
 
   Functions that start with \code{gen} generate a \code{list} of the
-  elements of C^A for the window size and number of colors.  Most of
-  these functions call \code{gengridcache} with appropriate arguments.
+  elements of \eqn{C^A}{C^A} for the window size and number of colors.
+  Most of these functions call \code{gengridcache} with appropriate
+  arguments.
 
   Functions that have \code{overlap} and \code{nonoverlap} versions
   generate a overlapping and nonoverlapping set of windows respectively.
@@ -128,17 +143,15 @@ sixteenpixel.nonoverlap(x, ncolor, a, idx, gcache=NULL)
   
 }
 \value{
-  \code{incvector} takes a vector and returns a new vector.  These
-  vectors can be regarded as elements of C^A cast into the a vector.  If
-  you let v_1 be any vector in B = \{ as.vector(c) | c \\in C^A \} then the
-  set of vectors \{v_1,\dots,v_\{|C|^|A|\} | v_\{j+1\} = v_j \} = B.
-
+  
   Functions that start with \code{gen} return a \code{list} of the
-  elements of C^A.
+  elements of \eqn{C^A}{C^A}.  
 
   The other functions (e.g. \code{twopixel}, \code{fourpixel}, \dots)
-  return the result of replacing the a-th window of x with the idx-th
-  element of C^A and calculating \code{calc_t_innergrid} for that window.
+  return the result of replacing the \code{a}-th window of \code{x} with
+  the \code{idx}-th element of \eqn{C^A}{C^A} and calculating
+  \code{calc_t_innergrid} for that window.
+  
 }
 \examples{
 
@@ -154,7 +167,7 @@ foo <- packPotts(x, ncolor)
 out <- potts(foo, theta, nbatch=10)
 x <- unpackPotts(out$final)
 
-t_stat <- calc_t(x, ncolor)[-1]
+t_stat <- calc_t(x, ncolor)
 t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
                                  singleton)
 

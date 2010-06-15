@@ -16,7 +16,7 @@ out <- potts(packPotts(x, ncolor), theta, nbatch=1000, blen=1)
 x <- unpackPotts(out$final)
 
 # create cache
-t_stat <- calc_t(x, ncolor)[-1]
+t_stat <- calc_t(x, ncolor)
 t_stat
 t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1, 
                                  singleton)

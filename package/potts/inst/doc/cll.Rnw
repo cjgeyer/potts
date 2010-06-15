@@ -128,7 +128,6 @@ Once we have the image, we can calculate $t(x)$ using the function,
 <<calct>>=
 t_stat <- calc_t(x, ncolor)
 t_stat
-t_stat <- t_stat[-1]
 @ 
 
 Next we need to calculate {\it t\_cache}, however, this calculation
@@ -186,7 +185,7 @@ advantage by passing mclapply in as the fapply argument to the CLL
 family of functions.
 \begin{verbatim}
 library(multicore)
-t_stat <- calc_t(x, ncolor)[-1]
+t_stat <- calc_t(x, ncolor)
 t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1, 
                                   singleton, mclapply)
 theta.initial <- 1:ncolor

@@ -13,21 +13,16 @@ gr.composite.ll(theta, t_stat, t_cache=NULL, fapply=lapply)
 \arguments{
 
   \item{theta}{numeric canonical parameter vector.  The CLL will be
-               evaluated at this point.  It is assumed that a component
-               corresponding to one of the colors has been dropped.}
+               evaluated at this point.  It is assumed that the
+               component corresponding to the first color has been
+               dropped.}
 
   \item{t_stat}{numeric, canonical statistic vector.  The value of the
-                canonical statistic for the full image.  It is assumed
-                that a component corresponding to one of the colors has
-                been dropped.  It must be the same component as for
-                \code{theta}.}
+                canonical statistic for the full image.}
 
-  \item{t_cache}{numeric 3 dimensional array.  Theoretically optional,
-                 but required for now.  t_cache[i,j,] = t(c_j union
-                 x_\{L \\ A\}), with the same component dropped as
-                 \code{t_stat} and \code{theta}.  i means the ith
-                 enumerated element of script(A), denoted A_i.  j
-                 corresponds to the jth element of C^\{A_i\}}
+  \item{t_cache}{list of arrays.  \code{t_cache[[i]][j,]} = the value of
+    \eqn{t}{\code{t}} with window \eqn{A_i}{A(i)} replaced by the
+    \eqn{j^{th}}{j-th} element of \eqn{C^A}{C^A}.}
 	       
   \item{fapply}{function.  Expected to function as lapply does.  Usefull
     for enabling parallel processing.  E.g. use the mclapply function
@@ -35,11 +30,34 @@ gr.composite.ll(theta, t_stat, t_cache=NULL, fapply=lapply)
 
 }
 \details{
-  
+
   For the given value of \code{theta} \code{composite.ll} and
   \code{gr.composite.ll} calculate the CLL and the gradient of the CLL
   respectively for a realized Potts model represented by \code{t_stat}
   and \code{t_cache}.
+
+  \eqn{\mathcal{A}}{sA} is the set of all \emph{windows} to be used in
+  calculating the Composite Log Likelihood (CLL) for a Potts model.  A
+  \emph{window} is a collection of adjacent pixels on the lattice of the
+  Potts model.  \eqn{A}{A} is used to represent a generic window in
+  \eqn{\mathcal{A}}{sA -- meaning `script A'}, the code in this package
+  expects that all the windows in \eqn{\mathcal{A}}{sA} have the same
+  size and shape.  \eqn{|A|}{|A|} is used to denote the size, or number
+  of pixels in a window.  Each pixel in a Potts takes on a value in
+  \eqn{C}{C}, the set of possible colors.  For simplicity, this
+  implementation takes \eqn{C = \{1,\dots,\texttt{ncolor}\}}{C =
+  \{1,\dots,\code{ncolor}\}}.  Elements of \eqn{C}{C} will be referenced
+  using \eqn{c_j}{c(j)} with \eqn{j \in \{1,\dots,\texttt{ncolor}\}}{j
+  in \{1,\dots,\code{ncolor}\}}.  \eqn{C^A}{C^A} is used to denote all
+  the permutations of \eqn{C}{C} across the window \eqn{A}{A}, and
+  \eqn{|C|^{|A|}}{|C|^|A|} is used to denote the size of \eqn{C^A}{C^A}.
+  In an abuse of notation, we use \eqn{A_a}{A(a)} to refer to the
+  \eqn{a^{th}}{a-th} element of \eqn{\mathcal{A}}{sA}.  No ordinal or
+  numerical properties of \eqn{\mathcal{A}}{sA}, \eqn{C}{C} or
+  \eqn{C^A}{C^A} are used, only that each element in the sets are
+  referenced by one and only one indexing value.
+
+
   
 }
 \value{
@@ -62,13 +80,11 @@ foo <- packPotts(x, ncolor)
 out <- potts(foo, theta, nbatch=10)
 x <- unpackPotts(out$final)
 
-t_stat <- calc_t(x, ncolor)[-1]
+t_stat <- calc_t(x, ncolor)
 t_cache_mple <- generate_t_cache(x, ncolor, t_stat, nrow*ncol, 1,
                                  singleton)
 t_cache_two <- generate_t_cache(x, ncolor, t_stat, nrow*ncol/2, 2,
                                 twopixel.nonoverlap)
-
-theta.initial <- 1:ncolor
 
 composite.ll(theta[-1], t_stat, t_cache_mple)
 gr.composite.ll(theta[-1], t_stat, t_cache_mple)

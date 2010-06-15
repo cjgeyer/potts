@@ -11,7 +11,7 @@ composite.ll <- function(theta, t_stat, t_cache=NULL, fapply=lapply) {
     tot_list <- fapply(t_cache, function(arr) {
                                         # subtact base case
       tmp <- t(apply(arr, 1, function(r) r - arr[1,]))
-      (t_stat - arr[1,]) %*% theta - log(sum(exp(tmp %*% theta)))
+      (t_stat[-1] - arr[1,]) %*% theta - log(sum(exp(tmp %*% theta)))
     })
     sum(unlist(tot_list))
   }

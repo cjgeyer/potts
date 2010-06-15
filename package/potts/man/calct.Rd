@@ -70,7 +70,7 @@ foo <- packPotts(x, ncolor)
 out <- potts(foo, theta, nbatch=10)
 x <- unpackPotts(out$final)
 
-t_stat <- calc_t(x, ncolor)[-1]
+t_stat <- calc_t(x, ncolor)
 t_stat_inner <- calc_t(x, ncolor, matrix(1, nrow=2, ncol=2), 1, 1)
 
 }

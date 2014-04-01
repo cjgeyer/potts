@@ -1,3 +1,27 @@
 Potts Models
-Subdirectory package/pott is the source for the devel version of the R package
+Subdirectory package/potts is the source for the devel version of the R package
 On CRAN http://CRAN.R-project.org/package=potts
+
+This repo does not contain PDF for the vignette.
+
+    cd package
+    rm -f potts/src/*.{o,so,rds}
+    R CMD check potts
+    cd potts/vignettes
+    R --vanilla
+    library(potts, lib.loc = "../../potts.Rcheck")
+    Sweave("cll.Rnw")
+    q()
+    pdflatex cll
+    pdflatex cll
+    mkdir ../inst
+    mkdir ../inst/doc
+    mv cll.pdf ../inst/doc
+    rm -f *.aux  *.log  *.pdf  *.tex
+    cd ../..
+    rm -f potts/src/*.{o,so,rds}
+    R CMD check potts
+
+Should make the package R CMD check without errors.
+
+

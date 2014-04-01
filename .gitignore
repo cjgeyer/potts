@@ -3,7 +3,7 @@
 *.log
 *.o
 *.so
-notes
 typescript
 potts.Rcheck/
 potts*.tar.gz
+*.rds

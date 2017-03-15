@@ -1,12 +1,12 @@
 Package: potts
-Version: 0.5-4
-Date: 2015-07-03
+Version: 0.5-5
+Date: 2017-03-15
 Title: Markov Chain Monte Carlo for Potts Models
 Author: Charles J. Geyer <charlie@stat.umn.edu> and Leif Johnson
     <leif@stat.umn.edu>
 Maintainer: Charles J. Geyer <charlie@stat.umn.edu>
-Depends: R (>= 2.10.0)
-Imports: stats, graphics
+Depends: R (>= 3.0.2)
+Imports: stats, graphics, compiler
 Suggests: pooh (>= 0.2)
 Description: Does Markov chain Monte Carlo (MCMC) simulation of Potts models
    and composite likelihood inference for Potts models.

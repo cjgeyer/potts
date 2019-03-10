@@ -1,0 +1,7 @@
+
+Version 0.5-8
+
+Remove dependence on R package compiler.  (Now rely on JIT.)
+
+Note from R CMD check --as-cran about (possibly) invalid DOI 10.2307/2987782
+seems to be bogus.  https://rss.onlinelibrary.wiley.com/doi/10.2307/2987782

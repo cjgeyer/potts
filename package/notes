@@ -1,4 +1,10 @@
-\rm -f potts_*.tar.gz # if version number has changed
+# to add extra compiler warnings
+# note that file myMakevars must be a copy of aster/src/Makevars
+#     with extra stuff added
+export R_MAKEVARS_USER=`pwd`/myMakevars
+
+# if version number has changed
+\rm -f potts_*.tar.gz
 
 R CMD build potts
 R CMD check potts_*.tar.gz

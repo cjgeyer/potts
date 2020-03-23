@@ -1,5 +1,5 @@
 # to add extra compiler warnings
-# note that file myMakevars must be a copy of aster/src/Makevars
+# note that file myMakevars must be a copy of potts/src/Makevars
 #     with extra stuff added
 export R_MAKEVARS_USER=`pwd`/myMakevars
 
@@ -8,3 +8,19 @@ export R_MAKEVARS_USER=`pwd`/myMakevars
 
 R CMD build potts
 R CMD check potts_*.tar.gz
+
+# do at least once before shipping
+# both potts.Rcheck/potts-Ex.Rout and potts.Rcheck/tests/*.Rout
+#     should have no complaints from valgrind
+#     but we have to suppress some complaints about the C standard library
+export VALGRIND_OPTS=--suppressions=`pwd`/myValgrind.supp
+R CMD check potts_*.tar.gz --use-valgrind
+grep "ERROR SUMMARY" potts.Rcheck/00check.log
+grep "ERROR SUMMARY" potts.Rcheck/potts-Ex.Rout
+grep "definitely lost:" potts.Rcheck/00check.log
+grep "definitely lost:" potts.Rcheck/polyapost-Ex.Rout
+
+# alternatively, to get valgrind to produce suppression specifications
+export VALGRIND_OPTS="--error-limit=no --gen-suppressions=all --log-file=minimalraw.log"
+# and then run R CMD check --use-valgrind and then look in the 2 files
+# name minimalraw.log that are put in potts.Rcheck for suppressions

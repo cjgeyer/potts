@@ -1,7 +1,9 @@
 
-Version 0.5-8
+Version 0.5-9
 
-Remove dependence on R package compiler.  (Now rely on JIT.)
+Add calls R_CheckUserInterrupt()
 
 Note from R CMD check --as-cran about (possibly) invalid DOI 10.2307/2987782
 seems to be bogus.  https://rss.onlinelibrary.wiley.com/doi/10.2307/2987782
+Also DuckDuckGo and Google have no trouble finding a link to the paper
+when this DOI is searched for.

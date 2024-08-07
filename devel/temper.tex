@@ -1,0 +1,47 @@
+
+\documentclass[11pt]{article}
+
+\let\code=\texttt
+
+\begin{document}
+
+\title{Adding Simulated Tempering}
+
+\author{Charles J. Geyer}
+
+\maketitle
+
+We want to add simulated tempering (a.~k.~a.\ serial tempering) to
+this package (CRAN package \code{potts}).
+We do not particularly want to add parallel tempering.
+
+Simulated tempering and parallel tempering are implemented in R function
+\code{temper} in R package \code{mcmc} but the same authors as this package.
+The two packages have different licenses, \code{potts} is GPL and \code{mcmc}
+is MIT, but presumably the authors can steal their own code and re-license it.
+
+The fundamental problem is that C function \code{potts} is not modular.
+It is structured (in the sense of "structured programming") but there
+are no function calls.  It is just one big mess of loops inside of loops
+inside of loops.
+
+In order to allow us to have two C functions, \code{potts} and \code{temper}
+one that does not do tempering (like the current function) and one that does
+but are otherwise identical, we need functions that do
+\begin{itemize}
+\item the basic Swendsen-Wang update and
+\item the basic simulated tempering update (change of distribution).
+\end{itemize}
+And these can be wrapped with the loop inside of loop inside of loop that
+does the MCMC with batching and spacing.
+
+We also have the issue of all of the packing and unpacking of pixel data
+(and bond data?).  Perhaps that should be modularized too.
+
+Just say no!  Like what was done to add an output function to the code,
+we will add simulated tempering in the kludgiest possible way.  We will
+add arguments to C function \code{potts}
+
+
+\end{document}
+
